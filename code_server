@@ -23,3 +23,6 @@ client.containers.run('codercom/code-server:v2')
 
 {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
  '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
+
+docker container stop $(docker container ls -aq)
+docker container rm $(docker container ls -aq)

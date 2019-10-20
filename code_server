@@ -13,8 +13,13 @@ docker run -it -p 127.0.0.1:8080:8080 -v "$(pwd):/home/project:cached" codercom/
 docker run -it -p 127.0.0.1:8080:8080 -v "$(pwd):/home/project:cached" codercom/code-server:v2 
 
 docker run -it -p 127.0.0.1:8080:8080 -v "/home/neelesh/ALCODING/SE/temp1":"/home/project" codercom/code-server:v2 
+
 docker run -it -p 127.0.0.1:8081:8080 -v "/home/neelesh/ALCODING/SE/temp2":"/home/project" codercom/code-server:v2 
 
-docker run -it -p 127.0.0.1:8080:8080 -v "$(pwd)" codercom/code-server:v2 
+client.containers.run('codercom/code-server:v2', ports={'8080/tcp': 8080}, volumes = {"/home/neelesh/ALCODING/SE/temp1": {'bind' : "/home/project", 'mode': 'rw'}}, detach = True)
 
+client.containers.run('codercom/code-server:v2 ',ports={'8000/tcp': 8000}, detach = True)
+client.containers.run('codercom/code-server:v2')
 
+{'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
+ '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}

@@ -26,3 +26,12 @@ client.containers.run('codercom/code-server:v2')
 
 docker container stop $(docker container ls -aq)
 docker container rm $(docker container ls -aq)
+
+docker container stop $(docker container ls -aq) & docker container rm $(docker container ls -aq)
+
+docker build -t test1:latest .
+docker run -it -d -v "/home/neelesh/Semester_7/Software_Engineering/project/code/tmp/flask":"/home/app" test1:latest
+docker exec -it 911ed220832708b4c2ced033c23ab4c639f8dae290a2bd9aa4d07f720cd46fc7 bash
+
+
+docker run -d -p 5005:5000 test2:latest

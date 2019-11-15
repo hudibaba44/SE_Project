@@ -8,6 +8,7 @@ import json
 from database_code_editor import code_editor_db_service
 import time
 import shutil
+from time import sleep
 
 app = Flask(__name__)
 api = Api(app)
@@ -19,9 +20,13 @@ PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
 START_PORT_FOR_DEPLOYED_SERVER = 6000
 HOST_IP = "0.0.0.0"
+PATH_TO_DOCKERFILES = "dockerfiles"
 code_editor_db = code_editor_db_service()
 
 current_micro_time = lambda: int(round(time.time() * 1000000))
+
+def get_dockerfile_path(project_id):
+    return Path(PATH_TO_DOCKERFILES, "Dockerfile_flask")
 
 def make_dictionary_server_ip_port_no(server_ip, port_no):
     return {
@@ -67,14 +72,23 @@ def get_free_port(START_PORT):
     return None
     # return 5500
 
-def build_image(project_id, folder_path):
+def build_image(user_id, project_id, folder_path):
     tmp_folder_name = "tmp"+str(current_micro_time())
     tmp_folder_path = Path(tmp_folder_name)
     if(os.path.exists(tmp_folder_path)):
         tmp_folder_name+='1'
         tmp_folder_path = Path(tmp_folder_name)
-    os.mkdir(tmp_folder_path)
+    # os.mkdir(tmp_folder_path)
+    shutil.copytree(folder_path, tmp_folder_path/"app")
+    dockerfile_path = get_dockerfile_path(project_id)
+    shutil.copy(dockerfile_path, tmp_folder_path/"Dockerfile")
+    print(f'{user_id}_{project_id}')
+    # Spaces not allowed in tag name
+    docker_client.images.build(path = str(tmp_folder_path), 
+    tag = f'{user_id}_{project_id}')
 
+    # shutil.copytree()
+    sleep(2)
     shutil.rmtree(tmp_folder_path)
 
     
@@ -103,17 +117,25 @@ def create_user_deployed_server(user_id, project_id, folder_path):
     port_no = get_free_port(START_PORT_FOR_DEPLOYED_SERVER)
     if port_no is None:
         return (None, None)
+
+    build_image(user_id, project_id, folder_path)
+
     container_object = docker_client.containers.run(
-        CODE_EDITOR_IMAGE_NAME,
-        ports={PORT_OF_CONTAINER: f'{port_no}'},
-        volumes={
-            path_to_folder: {
-                'bind': PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER,
-                'mode': 'rw'}
-        },
+        f'{user_id}_{project_id}',
+        ports={'5000/tcp': f'{port_no}'},
         detach=True)
-    code_editor_db.insert_user_id_project_id_ip_address_port_no_container_id(
-        user_id, project_id, HOST_IP, port_no, container_object.id)
+    # container_object = docker_client.containers.run(
+    #     CODE_EDITOR_IMAGE_NAME,
+    #     ports={PORT_OF_CONTAINER: f'{port_no}'},
+    #     volumes={
+    #         path_to_folder: {
+    #             'bind': PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER,
+    #             'mode': 'rw'}
+    #     },
+    #     detach=True)
+    # code_editor_db.insert_user_id_project_id_ip_address_port_no_container_id(
+    #     user_id, project_id, HOST_IP, port_no, container_object.id)
+    # return ("test", "test")
     return (HOST_IP, port_no)
 
 
@@ -207,6 +229,7 @@ class user_deployed_server(Resource):
 
 
 api.add_resource(code_editor, '/')
+api.add_resource(user_deployed_server, '/deploy')
 
 if __name__ == '__main__':
     app.run(debug=True)

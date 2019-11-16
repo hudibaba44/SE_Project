@@ -43,15 +43,16 @@ def login():
     req = eval(request.data)
     user_email = req["email"]
     pwd = req["password"]
-    x = users.find_one({user_email : { '$exists' : True } } )
+    document = {"email_id" : user_email, "password" : pwd}
+    x = users.find_one(document)
     if x == None:
         status = 404
-    elif x[user_email] == pwd:
-        session['user'] = user_email
+    elif x['password'] == pwd:
         status = 200
+        res = {"email" : user_email, "fullName" : x['name']}
     else:
         status = 404
-    return jsonify({}), status
+    return jsonify(res), status
 
 @app.route("/logout", methods = ["GET"])
 def logout():

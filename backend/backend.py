@@ -24,15 +24,16 @@ def test():
 def add_user():
     req = eval(request.data)
     name = req["name"]
-    user_email = req["email_id"]
+    user_email = req["email"]
     pwd = req["password"]
-    if users.find_one({user_email : { '$exists' : True } } ) == None:
-        document = {user_email : pwd, "name" : name}
+    document = {"email_id" : user_email}
+    if users.find_one(document) == None:
+        document = {"email_id" : user_email ,"password": pwd, "name" : name}
         x = users.insert_one(document)
         status = 200
         print(x)
     else:
-        x = users.find_one({user_email : { '$exists' : True } } )
+        x = users.find_one(document)
         print(x)
         status = 400
     return jsonify({}), status
@@ -40,7 +41,7 @@ def add_user():
 @app.route("/login", methods = ["POST"])
 def login():
     req = eval(request.data)
-    user_email = req["email_id"]
+    user_email = req["email"]
     pwd = req["password"]
     x = users.find_one({user_email : { '$exists' : True } } )
     if x == None:
@@ -49,8 +50,8 @@ def login():
         session['user'] = user_email
         status = 200
     else:
-        status = 403
-    return jsonify(session['user']), status
+        status = 404
+    return jsonify({}), status
 
 @app.route("/logout", methods = ["GET"])
 def logout():
@@ -60,11 +61,11 @@ def logout():
 @app.route("/framework_signup", methods = ["POST"])
 def framework_signup():
     req = eval(request.data)
-    email_id = req["email_id"]
-    path = req["path"]
+    email_id = req["email"]
     framework = req["framework"]
+    path = "/" + email_id + framework
     folder_path = os.path.join(oath, framework)
-    os.mkdir(folder_path,0777)
+    os.mkdir(folder_path,777)
     document = {id : email_id, framework_path : folder_path}
     x = frameworkdb.find_one(document)
     if x == None:
@@ -78,4 +79,4 @@ def framework_signup():
 
 if __name__ == '__main__':
     app.secret_key = "secret_key"
-    app.run(host="127.0.0.1" ,port=80)
+    app.run(host="127.0.0.1" ,port=5000, debug = True)

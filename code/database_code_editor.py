@@ -1,10 +1,10 @@
 from pymongo import MongoClient
 mongo_client = MongoClient('localhost', 27017)
-database_code_editor = mongo_client.SE 
+database_SE = mongo_client.SE 
 class code_editor_db_service:
     # code_editor_db = None
     def __init__(self):
-        self.code_editor_db = database_code_editor.code_editor
+        self.code_editor_db = database_SE.code_editor
     def create_dictionary_user_id_project_id(self, user_id, project_id):
         return  {
                 "user_id": user_id,

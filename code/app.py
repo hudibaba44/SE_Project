@@ -228,8 +228,8 @@ class user_deployed_server(Resource):
             )
 
 
-api.add_resource(code_editor, '/')
+api.add_resource(code_editor, '/code_editor')
 api.add_resource(user_deployed_server, '/deploy')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port = 5001)

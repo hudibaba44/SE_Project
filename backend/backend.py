@@ -6,20 +6,22 @@ import re
 import os
 import hashlib
 from flask_cors import CORS
+from database_backend import backend_db_service
+from pathlib import Path
+import requests 
 
 app = Flask(__name__)
 CORS(app)
-myclient = pymongo.MongoClient('mongodb://localhost:27017/')
-db = myclient["database"]
-users = db["users"]
-frameworkdb = db["framework"]
+backend_db = backend_db_service()
 
-def cleardb():
-    db.users.drop()
+IP_TO_CONTAINER_MICROSERVICE = "http://127.0.0.1:5001/"
+URL_TO_CODE_EDITOR = IP_TO_CONTAINER_MICROSERVICE + "code_editor"
+URL_TO_DEPLOYMENT_SERVER = IP_TO_CONTAINER_MICROSERVICE + "deploy"
+BASE_DIRECTORY_FOR_USER_FOLDERS = Path(os.path.expanduser('~'), "SE")
 
 @app.route("/", methods = ["GET"])
 def test():
-    cleardb()
+    backend_db.clear_users_db()
     return jsonify({}),200
 
 @app.route("/signup", methods = ["POST"])
@@ -28,16 +30,13 @@ def add_user():
     name = req["name"]
     user_email = req["email"]
     pwd = req["password"]
-    document = {"email_id" : user_email}
-    if users.find_one(document) == None:
-        document = {"email_id" : user_email ,"password": pwd, "name" : name}
-        x = users.insert_one(document)
+    document = backend_db.users_db_get_document_for_email_id(user_email)
+    status = 400
+    if document == None:
+        result_of_insert = backend_db.users_db_insert_email_id_password_name(
+            user_email, pwd, name)
         status = 200
-        print(x)
-    else:
-        x = users.find_one(document)
-        print(x)
-        status = 400
+        print(result_of_insert)
     return jsonify({}), status
 
 @app.route("/login", methods = ["POST"])
@@ -45,17 +44,47 @@ def login():
     req = eval(request.data)
     user_email = req["email"]
     pwd = req["password"]
-    document = {"email_id" : user_email, "password" : pwd}
-    x = users.find_one(document)
+    document = backend_db.users_db_get_document_for_email_id_password(user_email, pwd)
     res = {}
-    if x == None:
-        status = 404
-    elif x['password'] == pwd:
+    status = 404
+    if document is not None and document['password'] == pwd:
+        res = {
+            "email" : user_email, 
+            "fullName" : document['name']
+            }
         status = 200
-        res = {"email" : user_email, "fullName" : x['name']}
-    else:
-        status = 404
     return jsonify(res), status
+
+@app.route("/code_editor", methods = ["PUT", "DELETE"])
+def code_editor():
+    request_data = request.get_json()
+    email_key = "email"
+    framework_key = "framework"
+    print("REQUEST DATA IS", request_data)
+    assert email_key in request_data
+    assert framework_key in request_data
+    email_id = request_data[email_key]
+    framework = request_data[framework_key]
+    if request.method == "PUT":
+        document = backend_db.framework_db_get_document_for_email_id_framework(
+            email_id, framework)
+        assert document is not None
+        put_request = {
+            'user_id': email_id,
+            'project_id': framework,
+            'folder_path': document['folder_path']
+        }
+        response = requests.put(URL_TO_CODE_EDITOR, json = put_request)
+        print(response.status_code)
+        
+    if request.method == "DELETE":
+        delete_request = {
+            'user_id': email_id,
+            'project_id': framework,
+        }
+        response = requests.delete(URL_TO_CODE_EDITOR, json = delete_request)
+        print(response.status_code)
+
 
 @app.route("/logout", methods = ["GET"])
 def logout():
@@ -64,16 +93,23 @@ def logout():
 
 @app.route("/framework_signup", methods = ["POST"])
 def framework_signup():
-    req = eval(request.data)
-    email_id = req["email"]
-    framework = req["framework"]
-    path = "/" + email_id + framework
-    folder_path = os.path.join(oath, framework)
-    os.mkdir(folder_path,777)
-    document = {id : email_id, framework_path : folder_path}
-    x = frameworkdb.find_one(document)
-    if x == None:
-        frameworkdb.insert_one(x)
+    request_data = eval(request.data)
+    email_key = "email"
+    framework_key = "framework"
+    assert email_key in request_data
+    assert framework_key in request_data
+    email_id = request_data[email_key]
+    framework = request_data[framework_key]
+    folder_path = BASE_DIRECTORY_FOR_USER_FOLDERS/(email_id+"_"+framework)
+    # assert os.path.exists(folder_path) is False
+    # os.makedirs(folder_path)
+    if os.path.exists(folder_path) is False:
+        os.makedirs(folder_path)
+    
+    document = backend_db.framework_db_get_document_for_email_id_framework(email_id, framework)
+    if document is None:
+        backend_db.framework_db_insert_email_id_framework_folder_path(
+            email_id, framework, str(folder_path))
         # create git repo
         status = 200
     else:

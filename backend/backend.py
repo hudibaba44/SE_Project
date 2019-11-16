@@ -5,8 +5,10 @@ import json
 import re
 import os
 import hashlib
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 myclient = pymongo.MongoClient('mongodb://localhost:27017/')
 db = myclient["database"]
 users = db["users"]
@@ -45,6 +47,7 @@ def login():
     pwd = req["password"]
     document = {"email_id" : user_email, "password" : pwd}
     x = users.find_one(document)
+    res = {}
     if x == None:
         status = 404
     elif x['password'] == pwd:

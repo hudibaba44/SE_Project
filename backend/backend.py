@@ -150,7 +150,7 @@ def logout():
     session.pop('username', None)
     return jsonify({}),200
 
-@app.route("/framework_signup", methods = ["GET", "POST"])
+@app.route("/framework_signup", methods = ["POST"])
 def framework_signup():
     request_data = eval(request.data)
     email_key = "email"
@@ -160,28 +160,37 @@ def framework_signup():
     email_id = request_data[email_key]
     framework = request_data[framework_key]
     document = backend_db.framework_db_get_document_for_email_id_framework(email_id, framework)
+    folder_path = BASE_DIRECTORY_FOR_USER_FOLDERS/(email_id+"_"+framework)
+    # assert os.path.exists(folder_path) is False
+    # os.makedirs(folder_path)
+    if os.path.exists(folder_path) is False:
+        os.makedirs(folder_path)
+    copy_initial_folder(str(folder_path), framework)
+    status = 400
+    if document is None:
+        backend_db.framework_db_insert_email_id_framework_folder_path(
+            email_id, framework, str(folder_path))
+        # create git repo
+        status = 200
+        
+    return jsonify({}), status
 
-    if request.method == "GET":
-        if document is None:
-            return jsonify({}), 404
-        else:
-            return jsonify({}), 200
-            
-    if request.method == "POST":
-        folder_path = BASE_DIRECTORY_FOR_USER_FOLDERS/(email_id+"_"+framework)
-        # assert os.path.exists(folder_path) is False
-        # os.makedirs(folder_path)
-        if os.path.exists(folder_path) is False:
-            os.makedirs(folder_path)
-        copy_initial_folder(str(folder_path), framework)
-        if document is None:
-            backend_db.framework_db_insert_email_id_framework_folder_path(
-                email_id, framework, str(folder_path))
-            # create git repo
-            status = 200
-        else:
-            status = 400
-        return jsonify({}), status
+@app.route("/framework_signup_exists", methods = ["GET"])
+def framework_signup():
+    request_data = eval(request.data)
+    email_key = "email"
+    framework_key = "framework"
+    assert email_key in request_data
+    assert framework_key in request_data
+    email_id = request_data[email_key]
+    framework = request_data[framework_key]
+    document = backend_db.framework_db_get_document_for_email_id_framework(email_id, framework)
+    if document is None:
+        return jsonify({}), 404
+    else:
+        return jsonify({}), 200
+        
+
 
 if __name__ == '__main__':
     app.secret_key = "secret_key"

@@ -9,6 +9,7 @@ from flask_cors import CORS
 from database_backend import backend_db_service
 from pathlib import Path
 import requests 
+from distutils.dir_util import copy_tree
 
 app = Flask(__name__)
 CORS(app)
@@ -18,6 +19,14 @@ IP_TO_CONTAINER_MICROSERVICE = "http://127.0.0.1:5001/"
 URL_TO_CODE_EDITOR = IP_TO_CONTAINER_MICROSERVICE + "code_editor"
 URL_TO_DEPLOYMENT_SERVER = IP_TO_CONTAINER_MICROSERVICE + "deploy"
 BASE_DIRECTORY_FOR_USER_FOLDERS = Path(os.path.expanduser('~'), "SE")
+PATH_TO_INITIAL_FOLDERS = Path(os.path.realpath(__file__)).parents[0]/"initial_folders"
+
+def copy_initial_folder(folder_path, project_id):
+    if 'flask' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'flask_initial', folder_path)
+    if 'express' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'express_initial', folder_path)
+    
 
 @app.route("/", methods = ["GET"])
 def test():
@@ -76,6 +85,10 @@ def code_editor():
         }
         response = requests.put(URL_TO_CODE_EDITOR, json = put_request)
         print(response.status_code)
+        return make_response(
+            jsonify(response.text), 
+            response.status_code
+            )
         
     if request.method == "DELETE":
         delete_request = {
@@ -84,6 +97,52 @@ def code_editor():
         }
         response = requests.delete(URL_TO_CODE_EDITOR, json = delete_request)
         print(response.status_code)
+        print(response.content)
+        # response.
+        return make_response(
+            jsonify(response.text), 
+            response.status_code
+            )
+
+
+@app.route("/deploy_server", methods = ["PUT", "DELETE"])
+def deploy_server():
+    request_data = request.get_json()
+    email_key = "email"
+    framework_key = "framework"
+    assert email_key in request_data
+    assert framework_key in request_data
+    email_id = request_data[email_key]
+    framework = request_data[framework_key]
+    if request.method == "PUT":
+        document = backend_db.framework_db_get_document_for_email_id_framework(
+            email_id, framework)
+        assert document is not None
+        put_request = {
+            'user_id': email_id,
+            'project_id': framework,
+            'folder_path': document['folder_path']
+        }
+        response = requests.put(URL_TO_DEPLOYMENT_SERVER, json = put_request)
+        print(response.status_code)
+        return make_response(
+            jsonify(response.text), 
+            response.status_code
+            )
+        
+    if request.method == "DELETE":
+        delete_request = {
+            'user_id': email_id,
+            'project_id': framework,
+        }
+        response = requests.delete(URL_TO_DEPLOYMENT_SERVER, json = delete_request)
+        print(response.status_code)
+        print(response.content)
+        # response.
+        return make_response(
+            jsonify(response.text), 
+            response.status_code
+            )
 
 
 @app.route("/logout", methods = ["GET"])
@@ -105,7 +164,8 @@ def framework_signup():
     # os.makedirs(folder_path)
     if os.path.exists(folder_path) is False:
         os.makedirs(folder_path)
-    
+    copy_initial_folder(str(folder_path), framework)
+
     document = backend_db.framework_db_get_document_for_email_id_framework(email_id, framework)
     if document is None:
         backend_db.framework_db_insert_email_id_framework_folder_path(

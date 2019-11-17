@@ -172,11 +172,11 @@ def framework_signup():
             email_id, framework, str(folder_path))
         # create git repo
         status = 200
-        
+
     return jsonify({}), status
 
 @app.route("/framework_signup_exists", methods = ["GET"])
-def framework_signup():
+def framework_signup_exists():
     request_data = eval(request.data)
     email_key = "email"
     framework_key = "framework"

@@ -21,7 +21,8 @@ PORT_OF_CONTAINER = '8080/tcp'
 PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
 START_PORT_FOR_DEPLOYED_SERVER = 6000
-HOST_IP = "0.0.0.0"
+HOST_IP = "192.168.43.144"
+# HOST_IP = "0.0.0.0"
 PATH_TO_DOCKERFILES = Path(os.path.realpath(__file__)).parents[0]/"dockerfiles"
 code_editor_db = code_editor_db_service()
 deployment_server_db = deployment_server_db_service()
@@ -114,10 +115,11 @@ def get_dockerfile_ignore_path(project_id):
 
 
 def make_dictionary_server_ip_port_no(server_ip, port_no):
-    return {
-        'server_ip': server_ip,
-        'port_no': port_no
-    }
+    return str(server_ip) + ":" + str(port_no)
+    # return {
+    #     'server_ip': server_ip,
+    #     'port_no': port_no
+    # }
 
 
 def find_code_editor_user_id_project_id(user_id, project_id):

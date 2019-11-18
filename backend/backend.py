@@ -67,8 +67,9 @@ def login():
 @app.route("/code_editor", methods = ["PUT", "DELETE"])
 def code_editor():
     request_data = request.get_json()
+    print(request_data)
     email_key = "email"
-    framework_key = "framework"
+    framework_key = "frameworkId"
     print("REQUEST DATA IS", request_data)
     assert email_key in request_data
     assert framework_key in request_data
@@ -109,7 +110,7 @@ def code_editor():
 def deploy_server():
     request_data = request.get_json()
     email_key = "email"
-    framework_key = "framework"
+    framework_key = "frameworkId"
     assert email_key in request_data
     assert framework_key in request_data
     email_id = request_data[email_key]
@@ -152,9 +153,11 @@ def logout():
 
 @app.route("/framework_signup", methods = ["POST"])
 def framework_signup():
-    request_data = eval(request.data)
+    request_data = request.get_json()
+    print(request_data)
+
     email_key = "email"
-    framework_key = "framework"
+    framework_key = "frameworkName"
     assert email_key in request_data
     assert framework_key in request_data
     email_id = request_data[email_key]
@@ -177,9 +180,10 @@ def framework_signup():
 
 @app.route("/framework_signup_exists", methods = ["GET"])
 def framework_signup_exists():
-    request_data = eval(request.data)
+    # print("ARGS", request.args)
+    request_data = request.args
     email_key = "email"
-    framework_key = "framework"
+    framework_key = "frameworkId"
     assert email_key in request_data
     assert framework_key in request_data
     email_id = request_data[email_key]

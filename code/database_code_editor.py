@@ -10,14 +10,15 @@ class code_editor_db_service:
                 "project_id": project_id
             }
 
-    def insert_user_id_project_id_ip_address_port_no_container_id(self,
-        user_id, project_id, ip_address, port_no, container_id):
+    def insert_user_id_project_id_ip_address_port_no_container_id_password(self,
+        user_id, project_id, ip_address, port_no, container_id, password):
             document_to_insert = {
                 "user_id": user_id,
                 "project_id": project_id,
                 "ip_address": ip_address,
                 "port_no": port_no,
-                "container_id": container_id
+                "container_id": container_id,
+                "password": password
             }
             self.code_editor_db.insert_one(document_to_insert)
     def get_container_id(self, user_id, project_id):

@@ -10,13 +10,14 @@ import time
 import shutil
 from time import sleep
 from abc import ABC, abstractmethod
-
+import string
+import random 
 
 app = Flask(__name__)
 api = Api(app)
 docker_client = docker.from_env()
 
-CODE_EDITOR_IMAGE_NAME = "codercom/code-server:v2"
+CODE_EDITOR_IMAGE_NAME = "neelesh/code122"
 PORT_OF_CONTAINER = '8080/tcp'
 PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
@@ -236,8 +237,12 @@ def create_code_editor(user_id, project_id, folder_path):
                 'mode': 'rw'}
         },
         detach=True)
-    code_editor_db.insert_user_id_project_id_ip_address_port_no_container_id(
-        user_id, project_id, HOST_IP, port_no, container_object.id)
+    time.sleep(3)
+    list_of_logs = container_object.logs().decode("utf-8").split("\n")
+    assert "Password is" in list_of_logs[1]
+    password = list_of_logs[1].split(' ')[-1]
+    code_editor_db.insert_user_id_project_id_ip_address_port_no_container_id_password(
+        user_id, project_id, HOST_IP, port_no, container_object.id, password)
     return (HOST_IP, port_no)
 
 
@@ -332,7 +337,6 @@ class code_editor(Resource):
         else:
             return make_response("Container deleted succesfully", 200)
 
-
 class user_deployed_server(Resource):
     def put(self):
         request_data = request.get_json()
@@ -370,7 +374,23 @@ class user_deployed_server(Resource):
             return make_response("Container deleted succesfully", 200)
 
 
+class code_editor_password(Resource):
+    def get(self):
+        request_data = request.get_json()
+        assert 'user_id' in request_data
+        assert 'project_id' in request_data
+        user_id = request_data['user_id']
+        project_id = request_data['project_id']
+        document = code_editor_db.get_document_for_user_id_project_id(
+        user_id, project_id)
+        if(document is None):
+            return make_response("No container exists", 404)
+        else:
+            return make_response({"password":document['password']}, 200)
+
+
 api.add_resource(code_editor, '/code_editor')
+api.add_resource(code_editor_password, '/code_editor_password')
 api.add_resource(user_deployed_server, '/deploy')
 
 if __name__ == '__main__':

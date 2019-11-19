@@ -26,7 +26,8 @@ def copy_initial_folder(folder_path, project_id):
         copy_tree(PATH_TO_INITIAL_FOLDERS/'flask_initial', folder_path)
     if 'express' in project_id:
         copy_tree(PATH_TO_INITIAL_FOLDERS/'express_initial', folder_path)
-    
+    if 'django' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'django_initial', folder_path)
 
 @app.route("/", methods = ["GET"])
 def test():

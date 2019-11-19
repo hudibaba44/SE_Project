@@ -21,8 +21,8 @@ PORT_OF_CONTAINER = '8080/tcp'
 PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
 START_PORT_FOR_DEPLOYED_SERVER = 6000
-HOST_IP = "192.168.43.144"
-# HOST_IP = "0.0.0.0"
+# HOST_IP = "192.168.43.144"
+HOST_IP = "0.0.0.0"
 PATH_TO_DOCKERFILES = Path(os.path.realpath(__file__)).parents[0]/"dockerfiles"
 code_editor_db = code_editor_db_service()
 deployment_server_db = deployment_server_db_service()
@@ -46,6 +46,10 @@ class concrete_flask_creator(docker_file_creator):
 class concrete_express_creator(docker_file_creator):
     def factory_method(self):
         return concrete_express_product()
+
+class concrete_django_creator(docker_file_creator):
+    def factory_method(self):
+        return concrete_django_product()
 
 
 class dockerfile_product(ABC):
@@ -73,13 +77,23 @@ class concrete_express_product(dockerfile_product):
         if docker_ignore_path is not None:
             shutil.copy(docker_ignore_path, dest_path/".dockerignore")
 
+class concrete_django_product(dockerfile_product):
+    def copy_files(self, folder_path, dest_path):
+        shutil.copytree(folder_path, dest_path/"app")
+        dockerfile_path = get_dockerfile_path("django")
+        shutil.copy(dockerfile_path, dest_path/"Dockerfile")
+        docker_ignore_path = get_dockerfile_ignore_path("django")
+        if docker_ignore_path is not None:
+            shutil.copy(docker_ignore_path, dest_path/".dockerignore")
+
 
 def get_dockerfile_object(project_id):
     if 'flask' in project_id:
         return concrete_flask_creator()
     if 'express' in project_id:
         return concrete_express_creator()
-
+    if 'django' in project_id:
+        return concrete_django_creator()
 
 def container_run(user_id, project_id, port_no, image_name):
     container_object = None
@@ -95,6 +109,12 @@ def container_run(user_id, project_id, port_no, image_name):
             ports={'8080/tcp': f'{port_no}'},
             detach=True)
 
+    if 'django' in project_id:
+        container_object = docker_client.containers.run(
+            image_name,
+            ports={'8000/tcp': f'{port_no}'},
+            detach=True)
+
     return container_object
 
 
@@ -106,7 +126,8 @@ def get_dockerfile_path(project_id):
         return Path(PATH_TO_DOCKERFILES, "Dockerfile_flask")
     if 'express' in project_id:
         return Path(PATH_TO_DOCKERFILES, "Dockerfile_express")
-
+    if 'django' in project_id:
+        return Path(PATH_TO_DOCKERFILES, "Dockerfile_django")
 
 def get_dockerfile_ignore_path(project_id):
     if 'express' in project_id:

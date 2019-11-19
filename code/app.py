@@ -52,6 +52,9 @@ class concrete_django_creator(docker_file_creator):
     def factory_method(self):
         return concrete_django_product()
 
+class concrete_node_creator(docker_file_creator):
+    def factory_method(self):
+        return concrete_node_product()
 
 class dockerfile_product(ABC):
     @abstractmethod
@@ -87,6 +90,15 @@ class concrete_django_product(dockerfile_product):
         if docker_ignore_path is not None:
             shutil.copy(docker_ignore_path, dest_path/".dockerignore")
 
+class concrete_node_product(dockerfile_product):
+    def copy_files(self, folder_path, dest_path):
+        shutil.copytree(folder_path, dest_path)
+        dockerfile_path = get_dockerfile_path("node")
+        shutil.copy(dockerfile_path, dest_path/"Dockerfile")
+        docker_ignore_path = get_dockerfile_ignore_path("node")
+        if docker_ignore_path is not None:
+            shutil.copy(docker_ignore_path, dest_path/".dockerignore")
+
 
 def get_dockerfile_object(project_id):
     if 'flask' in project_id:
@@ -95,6 +107,8 @@ def get_dockerfile_object(project_id):
         return concrete_express_creator()
     if 'django' in project_id:
         return concrete_django_creator()
+    if 'node' in project_id:
+        return concrete_node_creator()
 
 def container_run(user_id, project_id, port_no, image_name):
     container_object = None
@@ -116,6 +130,12 @@ def container_run(user_id, project_id, port_no, image_name):
             ports={'8000/tcp': f'{port_no}'},
             detach=True)
 
+    if 'node' in project_id:
+        container_object = docker_client.containers.run(
+            image_name,
+            ports={'8080/tcp': f'{port_no}'},
+            detach=True)
+
     return container_object
 
 
@@ -129,10 +149,14 @@ def get_dockerfile_path(project_id):
         return Path(PATH_TO_DOCKERFILES, "Dockerfile_express")
     if 'django' in project_id:
         return Path(PATH_TO_DOCKERFILES, "Dockerfile_django")
+    if 'node' in project_id:
+        return Path(PATH_TO_DOCKERFILES, "Dockerfile_node")
 
 def get_dockerfile_ignore_path(project_id):
     if 'express' in project_id:
         return Path(PATH_TO_DOCKERFILES, ".dockerignore_express")
+    # if 'node' in project_id:
+    #     return Path(PATH_TO_DOCKERFILES, ".dockerignore_node")
     return None
 
 
@@ -237,7 +261,7 @@ def create_code_editor(user_id, project_id, folder_path):
                 'mode': 'rw'}
         },
         detach=True)
-    time.sleep(3)
+    time.sleep(5)
     list_of_logs = container_object.logs().decode("utf-8").split("\n")
     assert "Password is" in list_of_logs[1]
     password = list_of_logs[1].split(' ')[-1]
@@ -342,6 +366,11 @@ class user_deployed_server(Resource):
         request_data = request.get_json()
         user_id, project_id, folder_path = assert_and_return_user_id_project_id_folder_path(
             request_data)
+        if "c++" in project_id:
+            return make_response({}, 400)
+        if "python" in project_id:
+            return make_response({}, 400)
+        
         result_of_find = find_deployment_server_user_id_project_id(
             user_id, project_id)
         if(result_of_find is None):

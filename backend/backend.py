@@ -29,7 +29,13 @@ def copy_initial_folder(folder_path, project_id):
         copy_tree(PATH_TO_INITIAL_FOLDERS/'express_initial', folder_path)
     if 'django' in project_id:
         copy_tree(PATH_TO_INITIAL_FOLDERS/'django_initial', folder_path)
-
+    if 'node' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'node_initial', folder_path)
+    if 'c++' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'c++_initial', folder_path)
+    if 'python' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'python_initial', folder_path)
+        
 @app.route("/", methods = ["GET"])
 def test():
     backend_db.clear_users_db()

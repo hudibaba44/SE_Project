@@ -19,6 +19,7 @@ backend_git = git_service()
 
 IP_TO_CONTAINER_MICROSERVICE = "http://127.0.0.1:5001/"
 URL_TO_CODE_EDITOR = IP_TO_CONTAINER_MICROSERVICE + "code_editor"
+URL_TO_CODE_EDITOR_PASSWORD = IP_TO_CONTAINER_MICROSERVICE + "code_editor_password"
 URL_TO_DEPLOYMENT_SERVER = IP_TO_CONTAINER_MICROSERVICE + "deploy"
 BASE_DIRECTORY_FOR_USER_FOLDERS = Path(os.path.expanduser('~'), "SE")
 PATH_TO_INITIAL_FOLDERS = Path(os.path.realpath(__file__)).parents[0]/"initial_folders"
@@ -28,8 +29,14 @@ def copy_initial_folder(folder_path, project_id):
         copy_tree(PATH_TO_INITIAL_FOLDERS/'flask_initial', folder_path)
     if 'express' in project_id:
         copy_tree(PATH_TO_INITIAL_FOLDERS/'express_initial', folder_path)
-
-
+    if 'django' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'django_initial', folder_path)
+    if 'node' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'node_initial', folder_path)
+    if 'c++' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'c++_initial', folder_path)
+    if 'python' in project_id:
+        copy_tree(PATH_TO_INITIAL_FOLDERS/'python_initial', folder_path)
 @app.route("/", methods = ["GET"])
 def test():
     backend_db.clear_users_db()
@@ -148,10 +155,30 @@ def deploy_server():
             )
 
 
-@app.route("/logout", methods = ["GET"])
-def logout():
-    session.pop('username', None)
-    return jsonify({}),200
+
+@app.route("/code_editor_password", methods = ["GET"])
+def code_editor_password():
+    request_data = request.get_json()
+    print(request_data)
+    email_key = "email"
+    framework_key = "frameworkId"
+    print("REQUEST DATA IS", request_data)
+    assert email_key in request_data
+    assert framework_key in request_data
+    email_id = request_data[email_key]
+    framework = request_data[framework_key]
+ 
+    get_request = {
+        'user_id': email_id,
+        'project_id': framework
+    }
+    response = requests.get(URL_TO_CODE_EDITOR_PASSWORD, json = get_request)
+    print(response.status_code)
+    return make_response(
+        jsonify(response.text), 
+        response.status_code
+        )
+    
 
 @app.route("/framework_signup", methods = ["POST"])
 def framework_signup():

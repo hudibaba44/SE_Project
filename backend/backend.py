@@ -7,13 +7,15 @@ import os
 import hashlib
 from flask_cors import CORS
 from database_backend import backend_db_service
+from git_backend import git_service
 from pathlib import Path
-import requests 
+import requests
 from distutils.dir_util import copy_tree
 
 app = Flask(__name__)
 CORS(app)
 backend_db = backend_db_service()
+backend_git = git_service()
 
 IP_TO_CONTAINER_MICROSERVICE = "http://127.0.0.1:5001/"
 URL_TO_CODE_EDITOR = IP_TO_CONTAINER_MICROSERVICE + "code_editor"
@@ -35,7 +37,6 @@ def copy_initial_folder(folder_path, project_id):
         copy_tree(PATH_TO_INITIAL_FOLDERS/'c++_initial', folder_path)
     if 'python' in project_id:
         copy_tree(PATH_TO_INITIAL_FOLDERS/'python_initial', folder_path)
-        
 @app.route("/", methods = ["GET"])
 def test():
     backend_db.clear_users_db()
@@ -66,7 +67,7 @@ def login():
     status = 404
     if document is not None and document['password'] == pwd:
         res = {
-            "email" : user_email, 
+            "email" : user_email,
             "fullName" : document['name']
             }
         status = 200
@@ -74,8 +75,8 @@ def login():
 
 @app.route("/code_editor", methods = ["PUT", "DELETE"])
 def code_editor():
-    request_data = request.get_json()
-    print(request_data)
+    request_data = eval(request.data)
+    # print(request_data)
     email_key = "email"
     framework_key = "frameworkId"
     print("REQUEST DATA IS", request_data)
@@ -95,10 +96,10 @@ def code_editor():
         response = requests.put(URL_TO_CODE_EDITOR, json = put_request)
         print(response.status_code)
         return make_response(
-            jsonify(response.text), 
+            jsonify(response.text),
             response.status_code
             )
-        
+
     if request.method == "DELETE":
         delete_request = {
             'user_id': email_id,
@@ -109,14 +110,14 @@ def code_editor():
         print(response.content)
         # response.
         return make_response(
-            jsonify(response.text), 
+            jsonify(response.text),
             response.status_code
             )
 
 
 @app.route("/deploy_server", methods = ["PUT", "DELETE"])
 def deploy_server():
-    request_data = request.get_json()
+    request_data = eval(request.data)
     email_key = "email"
     framework_key = "frameworkId"
     assert email_key in request_data
@@ -135,10 +136,10 @@ def deploy_server():
         response = requests.put(URL_TO_DEPLOYMENT_SERVER, json = put_request)
         print(response.status_code)
         return make_response(
-            jsonify(response.text), 
+            jsonify(response.text),
             response.status_code
             )
-        
+
     if request.method == "DELETE":
         delete_request = {
             'user_id': email_id,
@@ -149,7 +150,7 @@ def deploy_server():
         print(response.content)
         # response.
         return make_response(
-            jsonify(response.text), 
+            jsonify(response.text),
             response.status_code
             )
 
@@ -202,8 +203,8 @@ def framework_signup():
         backend_db.framework_db_insert_email_id_framework_folder_path(
             email_id, framework, str(folder_path))
         # create git repo
+        req = git_backend.create_repo(email_id, framework)
         status = 200
-
     return jsonify({}), status
 
 @app.route("/framework_signup_exists", methods = ["GET"])
@@ -221,7 +222,7 @@ def framework_signup_exists():
         return jsonify({}), 404
     else:
         return jsonify({}), 200
-        
+
 
 
 if __name__ == '__main__':

@@ -203,7 +203,9 @@ def framework_signup():
         backend_db.framework_db_insert_email_id_framework_folder_path(
             email_id, framework, str(folder_path))
         # create git repo
-        req = git_backend.create_repo(email_id, framework)
+        backend_git.create_user(email_id, framework)
+        backend_git.create_repo(email_id, framework)
+        # req = git_backend.create_repo(email_id, framework)
         status = 200
     return jsonify({}), status
 

@@ -17,7 +17,7 @@ app = Flask(__name__)
 api = Api(app)
 docker_client = docker.from_env()
 
-CODE_EDITOR_IMAGE_NAME = "neelesh/code122"
+CODE_EDITOR_IMAGE_NAME = "neeleshca26/code_server"
 PORT_OF_CONTAINER = '8080/tcp'
 PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
@@ -260,6 +260,7 @@ def create_code_editor(user_id, project_id, folder_path):
                 'bind': PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER,
                 'mode': 'rw'}
         },
+        # network = "host",
         detach=True)
     time.sleep(5)
     list_of_logs = container_object.logs().decode("utf-8").split("\n")

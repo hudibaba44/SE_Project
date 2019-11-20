@@ -38,3 +38,6 @@ docker exec -it 911ed220832708b4c2ced033c23ab4c639f8dae290a2bd9aa4d07f720cd46fc7
 
 
 docker run -d -p 5005:5000 test2:latest
+
+
+docker run -it -p 127.0.0.1:8080:8080 -v "/home/neelesh/ALCODING/SE/temp1":"/home/project" --net=host neelesh/code122

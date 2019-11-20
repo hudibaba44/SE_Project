@@ -1,48 +1,35 @@
 import requests
 
 class git_service:
-
     def __init__(self):
-        self.drone_ip = "http://127.0.0.1:6000/"
+        self.git_ip = "http://127.0.0.1:3000/"
+        self.access_token = "8320d18e7112269504891a0a4a72ce987278a4ef"
+        self.params = (
+            ('access_token', self.access_token),
+        )
 
     def create_repo(self, email_id, framework_name):
         data = {
-         "auto_init": true,
-          "description": framework_name,
-          "gitignores": "string",
-          "issue_labels": "string",
-          "license": "string",
-          "name": "string",
-          "private": true,
-          "readme": "string"
+            "auto_init": True,
+            "description": framework_name,
+            "issue_labels": "string",
+            "name": framework_name,
+            "private": True
         }
-        req_api = "/admin/users/{}/repos".format(email_id)
-        resp = requests.post(self.drone_ip+req_api, data);
-        return resp
+        name = email_id.split('@')[0] + "_" + framework_name
+        req_api = "api/v1/admin/users/{}/repos".format(name)
+        requests.post(self.git_ip+req_api, json = data, params=self.params)
 
-data = {
-  "email": "user@example.com",
-  "full_name": "string",
-  "login_name": "string",
-  "must_change_password": True,
-  "password": "string",
-  "send_notify": True,
-  "source_id": 0,
-  "username": "string"
-}
-
-data = {
-  "auto_init": True,
-  "description": "string",
-  "issue_labels": "string",
-  "name": "string",
-  "private": True
-}
-
-params = (
-    ('access_token', '95a957a9ca86b0ee4edcdf3e4f21b101e289e30a'),
-)
-
-# headers = {"Authorization": "token " + "95a957a9ca86b0ee4edcdf3e4f21b101e289e30a"}
-# requests.post("http://192.168.43.109:3000/api/v1/admin/users", json = data, params=params)
-requests.post("http://192.168.43.109:3000/api/v1/admin/users/string/repos", json = data, params=params)
+    def create_user(self, email_id, framework_name):
+        name = email_id.split('@')[0] + "_" + framework_name
+        data = {
+            "email": email_id,
+            "full_name": name,
+            "login_name": name,
+            "must_change_password": True,
+            "password": "test123",
+            "send_notify": True,
+            "source_id": 0,
+            "username": name
+        }
+        requests.post(self.git_ip+"api/v1/admin/users", json = data, params=self.params)

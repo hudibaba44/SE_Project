@@ -2,8 +2,8 @@ import requests
 
 class git_service:
     def __init__(self):
-        self.git_ip = "http://127.0.0.1:3000/"
-        self.access_token = "8320d18e7112269504891a0a4a72ce987278a4ef"
+        self.git_ip = "http://192.168.43.129:3000/"
+        self.access_token = "83e07546717419229431791dd54ec949a3c62ff3"
         self.params = (
             ('access_token', self.access_token),
         )
@@ -14,7 +14,7 @@ class git_service:
             "description": framework_name,
             "issue_labels": "string",
             "name": framework_name,
-            "private": True
+            "private": False
         }
         name = email_id.split('@')[0] + "_" + framework_name
         req_api = "api/v1/admin/users/{}/repos".format(name)

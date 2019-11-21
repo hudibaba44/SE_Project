@@ -45,17 +45,23 @@ def test():
 @app.route("/signup", methods = ["POST"])
 def add_user():
     req = eval(request.data)
-    name = req["name"]
+    print(req)
+    name = req["fullName"]
     user_email = req["email"]
     pwd = req["password"]
     document = backend_db.users_db_get_document_for_email_id(user_email)
     status = 400
+    res = {}
     if document == None:
         result_of_insert = backend_db.users_db_insert_email_id_password_name(
             user_email, pwd, name)
         status = 200
+        res = {
+            "email" : user_email,
+            "fullName" : name
+            }
         print(result_of_insert)
-    return jsonify({}), status
+    return jsonify(res), status
 
 @app.route("/login", methods = ["POST"])
 def login():
@@ -158,7 +164,7 @@ def deploy_server():
 
 @app.route("/code_editor_password", methods = ["GET"])
 def code_editor_password():
-    request_data = request.get_json()
+    request_data = request.args
     print(request_data)
     email_key = "email"
     framework_key = "frameworkId"

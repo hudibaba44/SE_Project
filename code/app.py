@@ -22,8 +22,8 @@ PORT_OF_CONTAINER = '8080/tcp'
 PATH_TO_BIND_HOST_FOLDER_TO_CONTAINER = "/home/project"
 START_PORT_FOR_EDITOR = 5500
 START_PORT_FOR_DEPLOYED_SERVER = 6000
-# HOST_IP = "192.168.43.144"
-HOST_IP = "0.0.0.0"
+HOST_IP = "192.168.43.144"
+# HOST_IP = "0.0.0.0"
 PATH_TO_DOCKERFILES = Path(os.path.realpath(__file__)).parents[0]/"dockerfiles"
 code_editor_db = code_editor_db_service()
 deployment_server_db = deployment_server_db_service()
@@ -367,7 +367,7 @@ class user_deployed_server(Resource):
         request_data = request.get_json()
         user_id, project_id, folder_path = assert_and_return_user_id_project_id_folder_path(
             request_data)
-        if "c++" in project_id:
+        if "cpp" in project_id:
             return make_response({}, 400)
         if "python" in project_id:
             return make_response({}, 400)
@@ -407,6 +407,7 @@ class user_deployed_server(Resource):
 class code_editor_password(Resource):
     def get(self):
         request_data = request.get_json()
+        print(request_data)
         assert 'user_id' in request_data
         assert 'project_id' in request_data
         user_id = request_data['user_id']
